@@ -10,12 +10,8 @@ class MateriaDB{
         conflictAlgorithm: ConflictAlgorithm.fail);
   }
 
-  // Es necesario eliminar los registros en la tabla HORARIO porque
-  // ahí tambien se hace referencia a la materia eliminada
   static Future<int> eliminar (String nMat) async{
     Database base = await BDD.abrirBD();
-    base.delete("HORARIO", where: "NMAT=?",
-        whereArgs: [nMat]);
     base.delete("MATERIA", where: "NMAT=?",
         whereArgs: [nMat]);
     return 0;

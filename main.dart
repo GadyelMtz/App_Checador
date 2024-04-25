@@ -1,7 +1,10 @@
 import 'package:checador_asistencia_aula_profesores/Controlador/materiaDB.dart';
 import 'package:checador_asistencia_aula_profesores/Controlador/profesorDB.dart';
+import 'package:checador_asistencia_aula_profesores/Modelo/consulta2.dart';
+import 'package:checador_asistencia_aula_profesores/Modelo/consulta3.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'Controlador/asistenciaDB.dart';
 import 'Controlador/horarioDB.dart';
@@ -42,6 +45,8 @@ class _ChecadorState extends State<Checador> {
   List<Horario> _horarios = [];
   List<Asistencia> _asistencias = [];
   List<Consulta1> _consulta1 = [];
+  List<Consulta2> _consulta2 = [];
+  List<Consulta3> _consulta3 = [];
 
   TimeOfDay? _selectedTime;
   DateTime? _selectedDate;
@@ -58,6 +63,20 @@ class _ChecadorState extends State<Checador> {
     List<Consulta1> consultaResultados = await HorarioDB.consulta1(_nProfesor);
     setState(() {
       _consulta1 = consultaResultados;
+    });
+  }
+
+  void cargarConsulta2(_fecha) async {
+    List<Consulta2> consultaResultados = await HorarioDB.consulta2(_fecha);
+    setState(() {
+      _consulta2 = consultaResultados;
+    });
+  }
+
+  void cargarConsulta3(_materia) async {
+    List<Consulta3> consultaResultados = await HorarioDB.consulta3(_materia);
+    setState(() {
+      _consulta3 = consultaResultados;
     });
   }
 
@@ -110,16 +129,14 @@ class _ChecadorState extends State<Checador> {
       BuildContext context, TextEditingController controller) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate:
-          DateTime.now(), // Fecha inicial del selector (puede ser otra fecha)
-      firstDate: DateTime(2000), // Primera fecha permitida
-      lastDate: DateTime(2100), // Última fecha permitida
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2100),
     );
     if (picked != null && picked != _selectedDate) {
       setState(() {
-        _selectedDate = picked; // Actualiza la fecha seleccionada
-        controller.text =
-            "${_selectedDate?.year}-${_selectedDate?.month}-${_selectedDate?.day}"; // Actualiza el texto en el campo de texto
+        _selectedDate = picked;
+        controller.text = "${_selectedDate?.year}-${_selectedDate?.month}-${_selectedDate?.day}";
       });
     }
   }
@@ -187,9 +204,6 @@ class _ChecadorState extends State<Checador> {
                 child: ListView.builder(
               itemCount: _consulta1.length,
               itemBuilder: (contextBuilder, index) {
-                print("${_consulta1[index].nombreMateria}");
-                print("${_consulta1[index].horaHorario}");
-                print("${_consulta1[index].edificioMateria}");
                 return ListTile(
                   leading: CircleAvatar(child: Text("$index")),
                   title: Text("Materia: ${_consulta1[index].nombreMateria}"),
@@ -197,9 +211,197 @@ class _ChecadorState extends State<Checador> {
                       "Edificio: ${_consulta1[index].edificioMateria} - Hora: ${_consulta1[index].horaHorario}"),
                 );
               },
-            ))
+            )),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _indiceAuxiliar = 0;
+                      });
+                    },
+                    child: Text("Salir")),
+                SizedBox(
+                  width: 40,
+                ),
+                ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _indiceAuxiliar = 2;
+                      });
+                    },
+                    child: Text("Siguiente"))
+              ],
+            ),
+            SizedBox(
+              height: 20,
+            )
           ],
         );
+      case 2:{
+          final diaAsistencia = TextEditingController();
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                  padding: EdgeInsets.only(top: 50),
+                  child: Card(
+                    color: Colors.blue,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                          left: 25, right: 25, bottom: 5, top: 5),
+                      child: Text(
+                        'Consultas \navanzadas',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 40, color: Colors.white),
+                      ),
+                    ),
+                  )),
+              SizedBox(height: 30),
+              Text(
+                "Dado un dia, \n¿A que horarios asistió, no asistió un profesor?",
+                style: TextStyle(fontSize: 15, color: Colors.black),
+                textAlign: TextAlign.center,
+              ),
+              TextFormField(
+                readOnly: true,
+                controller: diaAsistencia,
+                onTap: ()=>
+                  _selectDate(context, diaAsistencia),
+                decoration: InputDecoration(
+                  labelText: 'Fecha',
+                  suffixIcon: Icon(Icons.calendar_today),
+                ),
+              ),
+              ElevatedButton(onPressed: (){
+                cargarConsulta2("${_selectedDate?.year}-${_selectedDate?.month}-${_selectedDate?.day}");
+              }, child: Text("Buscar")),
+              Expanded(
+                  child: ListView.builder(
+                itemCount: _consulta2.length,
+                itemBuilder: (contextBuilder, index) {
+                  String asistido = "";
+                  if(_consulta2[index].asistencia == 0)
+                    asistido = "Sí asistió";
+                  else
+                    asistido = "No asistió";
+                  return ListTile(
+                    leading: CircleAvatar(child: Text("$index")),
+                    title: Text("Profesor: ${_consulta2[index].nombreProfesor}"),
+                    subtitle: Text(
+                        "¿Asistió?: $asistido"),
+                  );
+                },
+              )),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _indiceAuxiliar = 1;
+                        });
+                      },
+                      child: Text("Anterior")),
+                  SizedBox(
+                    width: 40,
+                  ),
+                  ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          _indiceAuxiliar = 3;
+                        });
+                      },
+                      child: Text("Siguiente"))
+                ],
+              ),
+              SizedBox(
+                height: 20,
+              )
+            ],
+          );
+        }
+      case 3:{
+        return Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+                padding: EdgeInsets.only(top: 50),
+                child: Card(
+                  color: Colors.blue,
+                  child: Padding(
+                    padding: const EdgeInsets.only(
+                        left: 25, right: 25, bottom: 5, top: 5),
+                    child: Text(
+                      'Consultas \navanzadas',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(fontSize: 40, color: Colors.white),
+                    ),
+                  ),
+                )),
+            SizedBox(height: 30),
+            Text(
+              "¿Que profesores, en que edificio, salón y hora imparten una materia?",
+              style: TextStyle(fontSize: 15, color: Colors.black),
+              textAlign: TextAlign.center,
+            ),
+
+
+            DropdownButtonFormField(
+                padding: EdgeInsets.all(2),
+                items: _materias.map((materia) {
+                  return DropdownMenuItem(
+                    child: Text("${materia.nMat} - ${materia.descripcion}"),
+                    value: materia.nMat,
+                  );
+                }).toList(),
+                onChanged: (materia) {
+                  setState(() {
+                    _nMat = materia.toString();
+                    cargarConsulta3(_nMat);
+                  });
+                }),
+            Expanded(
+                child: ListView.builder(
+                  itemCount: _consulta3.length,
+                  itemBuilder: (contextBuilder, index) {
+                    return ListTile(
+                      leading: CircleAvatar(child: Text("$index")),
+                      title: Text("Profesor: ${_consulta3[index].nombreProfesor}"),
+                      subtitle: Text(
+                          "Edificio: ${_consulta3[index].edificio} - Hora: ${_consulta3[index].hora}"),
+                    );
+                  },
+                )),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _indiceAuxiliar = 2;
+                      });
+                    },
+                    child: Text("Anterior")),
+                SizedBox(
+                  width: 40,
+                ),
+                ElevatedButton(
+                    onPressed: () {
+                      setState(() {
+                        _indiceAuxiliar = 0;
+                      });
+                    },
+                    child: Text("Salir"))
+              ],
+            ),
+            SizedBox(
+              height: 20,
+            )
+          ],
+        );
+      }
       default:
         return Center();
     }
@@ -608,7 +810,7 @@ class _ChecadorState extends State<Checador> {
                                   readOnly: true,
                                   controller: horaHorario,
                                   onTap: () => _selectTime(context,
-                                      horaHorario), // Abre el selector de hora al tocar el campo
+                                      horaHorario),
                                   decoration: InputDecoration(
                                     labelText: 'Hora',
                                     suffixIcon: Icon(Icons.access_time),
@@ -1176,7 +1378,7 @@ class _ChecadorState extends State<Checador> {
                                     items: _horarios.map((horario) {
                                       return DropdownMenuItem(
                                         child: Text(
-                                            "${horario.nHorario} - nProfesor: ${horario.nProfesor}"),
+                                            "${horario.nHorario} - ${horario.nProfesor} - ${horario.hora} - ${horario.nMat} "),
                                         value: horario.nHorario,
                                       );
                                     }).toList(),

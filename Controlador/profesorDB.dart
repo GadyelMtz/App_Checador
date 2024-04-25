@@ -13,7 +13,6 @@ class ProfesorDB {
   // ahí tambien se hace referencia al profesor eliminado
   static Future<int> eliminar(String nProfesor) async {
     Database base = await BDD.abrirBD();
-    base.delete("HORARIO", where: "NPROFESOR=?", whereArgs: [nProfesor]);
     base.delete("PROFESOR", where: "NPROFESOR=?", whereArgs: [nProfesor]);
     return 0;
   }
